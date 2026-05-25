@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX ULTRA — Sistema de Habitos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300;1,400&family=Barlow:wght@300;400;500&family=Oswald:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ── RESET & ROOT ────────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --white:#FFFFFF;
+  --off-white:#F5F5F5;
+  --silver-light:#E8E8E8;
+  --silver:#C8C8C8;
+  --silver-mid:#ABABAB;
+  --silver-dark:#888888;
+  --gray:#555555;
+  --gray-dark:#333333;
+  --charcoal:#1A1A1A;
+  --near-black:#0D0D0D;
+  --monster-blue:#4EC3E0;
+  --monster-blue-light:#7DD6EC;
+  --monster-blue-pale:#B8EAF5;
+  --monster-blue-dark:#2AABBF;
+  --accent-silver:linear-gradient(135deg,#E8E8E8,#C0C0C0,#E8E8E8);
+  --bg:#FAFAFA;
+  --card-bg:#FFFFFF;
+  --border:#E0E0E0;
+  --border-dark:#CACACA;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--charcoal);
+  font-family:'Barlow',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--silver-light)}
+::-webkit-scrollbar-thumb{background:var(--silver);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--silver-mid)}
+
+/* ── NOISE TEXTURE OVERLAY ───────────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4;
+}
+
+/* ── NAV ─────────────────────────────────────────────────────── */
+.nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(250,250,250,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--silver-light);
+  display:flex;align-items:stretch;
+  box-shadow:0 1px 20px rgba(0,0,0,0.06);
+}
+.nav-logo{
+  padding:0 22px;
+  display:flex;align-items:center;gap:10px;
+  border-right:1px solid var(--silver-light);
+  text-decoration:none;
+}
+.nav-logo-m{
+  font-family:'Bebas Neue',cursive;
+  font-size:28px;letter-spacing:4px;
+  background:linear-gradient(135deg,#888,#C8C8C8,#E8E8E8,#C8C8C8,#888);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.nav-logo-ultra{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:10px;font-weight:700;letter-spacing:5px;
+  color:var(--monster-blue);text-transform:uppercase;
+  border:1px solid var(--monster-blue);
+  padding:2px 6px;border-radius:1px;
+}
+.nav-btn{
+  flex:1;padding:14px 6px;
+  background:transparent;border:none;border-bottom:2px solid transparent;
+  color:var(--silver-dark);
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;transition:all .25s;
+}
+.nav-btn:hover:not(.active){color:var(--gray-dark);border-bottom-color:var(--silver-light)}
+.nav-btn.active{color:var(--monster-blue);border-bottom-color:var(--monster-blue)}
+
+/* ── SECTIONS ────────────────────────────────────────────────── */
+.section{display:none;position:relative;z-index:1;min-height:100vh;animation:fadeUp .4s ease}
+.section.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO HEADER ─────────────────────────────────────────────── */
+.hero{
+  position:relative;overflow:hidden;
+  padding:50px 28px 40px;
+  background:linear-gradient(160deg,#FFFFFF 0%,#F0F0F0 50%,#E8E8E8 100%);
+  border-bottom:1px solid var(--silver-light);
+}
+.hero::before{
+  content:'';position:absolute;
+  top:-80px;right:-80px;
+  width:320px;height:320px;
+  background:radial-gradient(circle,rgba(78,195,224,0.08) 0%,transparent 70%);
+  border-radius:50%;
+}
+.hero::after{
+  content:'+ ZERO AZÚCAR +';
+  position:absolute;top:14px;left:0;right:0;
+  text-align:center;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:8px;
+  color:var(--silver-mid);text-transform:uppercase;
+}
+.hero-eyebrow{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:10px;font-weight:700;letter-spacing:6px;
+  color:var(--monster-blue);text-transform:uppercase;
+  margin-bottom:10px;margin-top:16px;
+}
+.hero-title{
+  font-family:'Bebas Neue',cursive;
+  font-size:72px;letter-spacing:6px;
+  background:linear-gradient(135deg,#555 0%,#AAAAAA 30%,#E0E0E0 50%,#AAAAAA 70%,#555 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:0.95;
+}
+.hero-sub{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:300;letter-spacing:4px;
+  color:var(--silver-dark);text-transform:uppercase;
+  margin-top:10px;
+}
+.hero-claw{
+  position:absolute;right:24px;bottom:16px;
+  font-size:80px;line-height:1;
+  background:linear-gradient(160deg,#DEDEDE,#AAAAAA,#888888);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  opacity:0.35;user-select:none;
+  font-family:'Bebas Neue',cursive;letter-spacing:-4px;
+}
+
+/* ── CARD BASE ───────────────────────────────────────────────── */
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:3px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.04);
+}
+.section-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:5px;
+  color:var(--monster-blue);text-transform:uppercase;
+  margin-bottom:6px;
+}
+.section-title{
+  font-family:'Bebas Neue',cursive;
+  font-size:22px;letter-spacing:2px;
+  color:var(--charcoal);
+}
+
+/* ── RANK BLOCK ──────────────────────────────────────────────── */
+.rank-wrap{
+  padding:20px 24px;border-bottom:1px solid var(--silver-light);
+  display:flex;align-items:center;gap:18px;
+  background:linear-gradient(90deg,#FFFFFF,#F5F5F5);
+}
+.rank-badge{
+  width:58px;height:58px;border-radius:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex-shrink:0;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:1px;
+  border:1.5px solid;position:relative;overflow:hidden;
+}
+.rank-badge::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.3));
+}
+.rank-badge.bronze{border-color:#CD7F32;color:#CD7F32;background:#FFF8F0}
+.rank-badge.silver{border-color:#AAAAAA;color:#888;background:#F8F8F8}
+.rank-badge.gold{border-color:#C8A000;color:#A07800;background:#FFFCF0}
+.rank-badge.platinum{border-color:#BBBBBB;color:#666;background:#F5F5F5}
+.rank-badge.diamond{border-color:var(--monster-blue);color:var(--monster-blue-dark);background:#F0FAFF}
+.rank-badge.unreal{border-color:#8B00FF;color:#6600CC;background:#F8F0FF}
+.rank-badge-sub{font-family:'Barlow Condensed',sans-serif;font-size:7px;letter-spacing:2px;opacity:.6;margin-top:2px;font-weight:700}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-family:'Bebas Neue',cursive;font-size:24px;letter-spacing:3px;color:var(--charcoal)}
+.xp-bar{height:3px;background:var(--silver-light);border-radius:1px;margin-top:8px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--monster-blue-dark),var(--monster-blue),var(--monster-blue-light));border-radius:1px;transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.xp-text{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--silver-mid);letter-spacing:1px;margin-top:5px}
+.rank-pts-wrap{text-align:right;flex-shrink:0}
+.rank-pts{font-family:'Bebas Neue',cursive;font-size:38px;color:var(--monster-blue);line-height:1}
+.rank-pts-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--silver-mid);letter-spacing:2px;text-transform:uppercase}
+
+.rank-ladder{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+  padding:12px 24px 16px;border-bottom:1px solid var(--silver-light);
+  background:var(--off-white);
+}
+.rank-step{
+  text-align:center;padding:9px 4px;border:1px solid var(--silver-light);border-radius:3px;
+  background:#fff;transition:all .2s;
+}
+.rank-step.current{border-color:var(--monster-blue);background:#F0FAFF}
+.rank-step.locked{opacity:.3}
+.rank-step-ico{font-size:15px;margin-bottom:3px}
+.rank-step-name{font-family:'Barlow Condensed',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--silver-dark);font-weight:700}
+.rank-step.current .rank-step-name{color:var(--monster-blue)}
+.rank-step-pts{font-family:'Barlow Condensed',sans-serif;font-size:8px;color:var(--silver-light);margin-top:2px}
+
+/* ── STATS ───────────────────────────────────────────────────── */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  padding:16px 24px;border-bottom:1px solid var(--silver-light);
+  background:var(--off-white);
+}
+.stat-card{
+  background:#fff;border:1px solid var(--border);border-radius:3px;
+  padding:14px 12px;
+}
+.stat-val{font-family:'Bebas Neue',cursive;font-size:36px;color:var(--charcoal);line-height:1}
+.stat-unit{font-size:14px;color:var(--monster-blue);margin-left:1px}
+.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:8px;letter-spacing:2px;color:var(--silver-mid);text-transform:uppercase;margin-top:5px}
+.stat-note{font-family:'Barlow',sans-serif;font-size:10px;color:var(--silver-light);margin-top:3px}
+.stat-note.up{color:var(--monster-blue-dark)}
+
+/* ── DAILY TASKS ─────────────────────────────────────────────── */
+.tasks-section{padding:20px 24px;border-bottom:1px solid var(--silver-light)}
+.tasks-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.task-date-badge{
+  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;
+  color:var(--monster-blue);text-transform:uppercase;
+  border:1px solid var(--monster-blue-pale);background:rgba(78,195,224,.06);
+  padding:3px 10px;border-radius:1px;
+}
+.task-list{display:grid;gap:5px}
+.task-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;
+  background:#fff;border:1px solid var(--border);border-radius:3px;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.task-item::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--monster-blue-light),var(--monster-blue));
+  opacity:0;transition:opacity .2s;
+}
+.task-item:hover{border-color:var(--silver);box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.task-item:hover::before{opacity:1}
+.task-item.done{background:var(--off-white);border-color:var(--silver-light)}
+.task-item.done::before{background:linear-gradient(180deg,#BBB,#888);opacity:1}
+.task-check{
+  width:22px;height:22px;border:1.5px solid var(--silver);border-radius:3px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;background:#fff;
+}
+.task-check:hover{border-color:var(--monster-blue)}
+.task-check.done{
+  background:linear-gradient(135deg,var(--monster-blue-dark),var(--monster-blue));
+  border-color:var(--monster-blue);
+}
+.task-check.done::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.task-text{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;letter-spacing:.5px;color:var(--charcoal);transition:all .2s}
+.task-item.done .task-text{color:var(--silver);text-decoration:line-through;text-decoration-color:var(--silver-light)}
+.task-priority{
+  font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;padding:2px 7px;border-radius:1px;flex-shrink:0;
+}
+.task-priority.alta{color:var(--monster-blue-dark);background:rgba(78,195,224,.1);border:1px solid var(--monster-blue-pale)}
+.task-priority.media{color:var(--silver-dark);background:var(--off-white);border:1px solid var(--silver-light)}
+.task-priority.baja{color:var(--silver-light);background:#fff;border:1px solid #EEEEEE}
+.task-del{
+  width:20px;height:20px;border:none;background:transparent;
+  color:var(--silver-light);cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:2px;transition:all .2s;flex-shrink:0;
+}
+.task-del:hover{color:#CC3333;background:rgba(200,50,50,.06)}
+
+.task-add-row{display:flex;gap:6px;margin-top:8px}
+.task-input{
+  flex:1;background:#fff;border:1px solid var(--border);
+  color:var(--charcoal);padding:10px 14px;
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:.5px;
+  border-radius:3px;outline:none;transition:border-color .2s;
+}
+.task-input:focus{border-color:var(--monster-blue)}
+.task-input::placeholder{color:var(--silver-light);font-weight:400}
+.prio-select{
+  background:#fff;border:1px solid var(--border);color:var(--gray);
+  padding:10px 10px;
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;
+  border-radius:3px;outline:none;cursor:pointer;min-width:80px;
+}
+.prio-select:focus{border-color:var(--monster-blue)}
+.task-add-btn{
+  padding:10px 18px;
+  background:linear-gradient(135deg,var(--monster-blue-dark),var(--monster-blue));
+  border:none;color:#fff;
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;cursor:pointer;border-radius:3px;transition:all .2s;
+  white-space:nowrap;
+}
+.task-add-btn:hover{background:linear-gradient(135deg,var(--monster-blue),var(--monster-blue-light));transform:translateY(-1px);box-shadow:0 4px 12px rgba(78,195,224,.3)}
+.task-progress{
+  display:flex;align-items:center;gap:10px;margin-top:10px;
+  padding:8px 12px;background:var(--off-white);border-radius:2px;border:1px solid var(--silver-light);
+}
+.task-prog-bar{flex:1;height:3px;background:var(--silver-light);border-radius:1px;overflow:hidden}
+.task-prog-fill{height:100%;background:linear-gradient(90deg,var(--monster-blue-dark),var(--monster-blue-light));border-radius:1px;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.task-prog-text{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--silver-mid);letter-spacing:1px;white-space:nowrap}
+
+/* ── HABITS ──────────────────────────────────────────────────── */
+.habits-section{padding:20px 24px;border-bottom:1px solid var(--silver-light)}
+.week-tabs{display:flex;gap:5px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.week-tab{
+  padding:6px 16px;border:1px solid var(--silver-light);border-radius:2px;
+  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--silver-mid);cursor:pointer;text-transform:uppercase;transition:all .2s;
+  background:#fff;white-space:nowrap;
+}
+.week-tab.active{background:var(--monster-blue);border-color:var(--monster-blue);color:#fff}
+.week-tab:hover:not(.active){border-color:var(--silver);color:var(--gray)}
+.habit-grid{display:grid;gap:5px}
+.habit-row{
+  background:#fff;border:1px solid var(--border);border-radius:3px;overflow:hidden;
+  transition:all .2s;
+}
+.habit-row:hover{border-color:var(--silver);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.habit-header{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.habit-color{width:3px;height:30px;border-radius:1px;flex-shrink:0}
+.habit-name{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;color:var(--gray-dark)}
+.habit-days{display:flex;gap:3px;margin-left:auto}
+.habit-day{
+  width:26px;height:26px;border:1px solid var(--silver-light);border-radius:2px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;color:var(--silver-light);
+  transition:all .15s;user-select:none;
+}
+.habit-day.done{background:linear-gradient(135deg,var(--monster-blue-dark),var(--monster-blue));border-color:var(--monster-blue);color:#fff}
+.habit-day.today-col{border-color:var(--silver-mid)}
+.habit-day:hover:not(.done){background:var(--off-white);color:var(--silver-mid)}
+.habit-streak{font-size:9px;color:var(--silver-light);padding:0 14px 8px;display:flex;align-items:center;gap:8px}
+.streak-bar{flex:1;height:2px;background:var(--silver-light);border-radius:1px;overflow:hidden}
+.streak-fill{height:100%;background:linear-gradient(90deg,var(--monster-blue-dark),var(--monster-blue-light));border-radius:1px;transition:width .8s ease}
+.add-habit-btn{
+  width:100%;padding:10px;margin-top:6px;
+  border:1.5px dashed var(--silver-light);background:transparent;
+  color:var(--silver-light);
+  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;border-radius:3px;transition:all .2s;
+}
+.add-habit-btn:hover{border-color:var(--silver);color:var(--silver-mid);background:var(--off-white)}
+.add-form{
+  background:var(--off-white);border:1px solid var(--silver-light);border-radius:3px;
+  padding:14px;margin-top:6px;display:none;
+}
+.add-form.visible{display:block;animation:fadeUp .25s ease}
+.form-input{
+  background:#fff;border:1px solid var(--border);color:var(--charcoal);
+  padding:9px 12px;
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;
+  border-radius:2px;outline:none;transition:border-color .2s;width:100%;margin-bottom:8px;
+}
+.form-input:focus{border-color:var(--monster-blue)}
+.form-input::placeholder{color:var(--silver-light);font-weight:300}
+.color-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.color-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--silver-mid);text-transform:uppercase}
+.color-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
+.color-dot.sel{border-color:var(--charcoal)}
+.btn-primary{
+  padding:9px 20px;
+  background:linear-gradient(135deg,var(--monster-blue-dark),var(--monster-blue));
+  border:none;color:#fff;
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;border-radius:2px;transition:all .2s;
+}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-secondary{
+  padding:9px 20px;background:#fff;border:1px solid var(--border);color:var(--silver-mid);
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;border-radius:2px;transition:all .2s;
+}
+.btn-secondary:hover{border-color:var(--silver);color:var(--gray)}
+.form-actions{display:flex;gap:6px;margin-top:4px}
+
+/* ── CHART ───────────────────────────────────────────────────── */
+.chart-section{padding:20px 24px;border-bottom:1px solid var(--silver-light)}
+.chart-wrap{background:#fff;border:1px solid var(--border);border-radius:3px;padding:18px}
+.chart-tabs{display:flex;gap:5px;margin-bottom:14px}
+.chart-tab{
+  padding:5px 14px;border:1px solid var(--silver-light);border-radius:2px;
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;
+  color:var(--silver-mid);cursor:pointer;text-transform:uppercase;transition:all .2s;background:#fff;
+}
+.chart-tab.active{background:var(--monster-blue);border-color:var(--monster-blue);color:#fff}
+
+/* ── BOOK ────────────────────────────────────────────────────── */
+.book-section{padding:20px 24px;border-bottom:1px solid var(--silver-light)}
+.book-wrap{background:#fff;border:1px solid var(--border);border-radius:3px;padding:18px}
+.book-title-text{font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:2px;color:var(--charcoal);margin-bottom:2px}
+.book-author-text{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--silver-mid);letter-spacing:2px;margin-bottom:14px;text-transform:uppercase}
+.book-prog-label{display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--silver-mid);letter-spacing:1px;margin-bottom:5px}
+.book-bar{height:3px;background:var(--silver-light);border-radius:1px;overflow:hidden;margin-bottom:10px}
+.book-fill{height:100%;background:linear-gradient(90deg,var(--monster-blue-dark),var(--monster-blue-light));border-radius:1px;transition:width 1s ease}
+.book-tip{
+  font-family:'Barlow',sans-serif;font-size:13px;font-weight:300;color:var(--silver-dark);
+  line-height:1.7;border-left:2px solid var(--monster-blue-pale);padding-left:14px;margin-top:10px;
+  font-style:italic;
+}
+.book-change-btn{
+  margin-top:14px;padding:7px 16px;background:#fff;
+  border:1px solid var(--silver-light);color:var(--silver-mid);
+  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;border-radius:2px;transition:all .2s;
+}
+.book-change-btn:hover{border-color:var(--monster-blue);color:var(--monster-blue)}
+.book-picker{display:none;background:var(--off-white);border:1px solid var(--silver-light);border-radius:3px;padding:14px;margin-top:6px}
+.book-select{
+  width:100%;background:#fff;border:1px solid var(--border);color:var(--charcoal);
+  padding:9px 12px;font-family:'Barlow',sans-serif;font-size:13px;
+  border-radius:2px;outline:none;margin-bottom:8px;
+}
+
+/* ── CALENDAR ────────────────────────────────────────────────── */
+.cal-section{padding:20px 24px 28px}
+.cal-wrap{background:#fff;border:1px solid var(--border);border-radius:3px;padding:18px}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.cal-nav-btn{
+  background:#fff;border:1px solid var(--border);color:var(--silver-mid);
+  padding:6px 14px;cursor:pointer;border-radius:2px;
+  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  transition:all .2s;
+}
+.cal-nav-btn:hover{border-color:var(--monster-blue);color:var(--monster-blue)}
+.cal-month{font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:3px;color:var(--charcoal)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-h{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;color:var(--silver-light);text-transform:uppercase;padding:8px 0}
+.cal-d{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid transparent;border-radius:2px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:600;color:var(--silver-mid);transition:all .15s;position:relative;
+}
+.cal-d:hover{border-color:var(--silver-light);background:var(--off-white);color:var(--gray)}
+.cal-d.today{border-color:var(--monster-blue)!important;color:var(--monster-blue);background:rgba(78,195,224,.05)}
+.cal-d.has-event::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;background:var(--monster-blue);border-radius:50%}
+.cal-d.other{opacity:.2}
+.cal-events-box{background:var(--off-white);border:1px solid var(--silver-light);border-radius:2px;padding:12px;margin-top:8px;min-height:60px}
+.cal-evt{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--silver-light)}
+.cal-evt-dot{width:5px;height:5px;background:var(--monster-blue);border-radius:50%;margin-top:5px;flex-shrink:0}
+.cal-evt-text{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gray);font-weight:600}
+.cal-evt-date{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--silver-mid);letter-spacing:1px}
+.cal-inp{
+  width:100%;background:#fff;border:1px solid var(--border);color:var(--charcoal);
+  padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;
+  border-radius:2px;outline:none;margin-top:8px;transition:border-color .2s;display:none;
+}
+.cal-inp:focus{border-color:var(--monster-blue)}
+.cal-inp::placeholder{color:var(--silver-light);font-weight:300}
+.cal-chart-wrap{margin-top:16px;border-top:1px solid var(--silver-light);padding-top:14px}
+.cal-chart-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--silver-light);text-transform:uppercase;margin-bottom:10px}
+
+/* ── DARK MODE (Modo Bestia) ─────────────────────────────────── */
+.dark-hero{
+  position:relative;overflow:hidden;
+  padding:60px 28px 44px;
+  background:linear-gradient(160deg,var(--near-black) 0%,#111 100%);
+  border-bottom:1px solid #1A1A1A;
+}
+.dark-hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(78,195,224,0.06) 0%,transparent 70%);
+  border-radius:50%;
+}
+.dark-hero::after{
+  content:'+ ZERO AZÚCAR +';
+  position:absolute;top:14px;left:0;right:0;text-align:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:8px;
+  color:#2A2A2A;text-transform:uppercase;
+}
+.dark-title{
+  font-family:'Bebas Neue',cursive;
+  font-size:72px;letter-spacing:6px;line-height:.95;
+  background:linear-gradient(135deg,#555,#999,#D0D0D0,#999,#555);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-top:16px;
+}
+.dark-sub{
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:300;letter-spacing:6px;
+  color:#3A3A3A;text-transform:uppercase;margin-top:8px;
+}
+.dark-claw{
+  position:absolute;right:20px;bottom:12px;
+  font-size:90px;line-height:1;
+  background:linear-gradient(160deg,#2A2A2A,#1A1A1A);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  user-select:none;font-family:'Bebas Neue',cursive;letter-spacing:-4px;
+}
+.dark-eyebrow{
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:6px;
+  color:var(--monster-blue);text-transform:uppercase;
+}
+.dark-body{background:var(--near-black)}
+.dark-scan{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--monster-blue),transparent);animation:scan 4s linear infinite}
+@keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+.dark-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#111}
+.dark-card{background:#0A0A0A;padding:26px 22px}
+.dark-card-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:4px;color:var(--monster-blue);text-transform:uppercase;margin-bottom:12px}
+.dark-card-title{font-family:'Bebas Neue',cursive;font-size:28px;letter-spacing:2px;color:#888;margin-bottom:14px}
+
+.dark-quote{
+  padding:40px 28px;text-align:center;border-bottom:1px solid #111;
+  background:var(--near-black);position:relative;overflow:hidden;
+}
+.dark-quote-text{
+  font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:300;
+  color:#888;max-width:560px;margin:0 auto;line-height:1.4;font-style:italic;
+  transition:opacity .3s ease;
+}
+.dark-quote-auth{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:4px;color:var(--monster-blue);margin-top:14px;text-transform:uppercase}
+.dark-btn{
+  display:inline-block;margin-top:18px;
+  background:transparent;border:1px solid #1A1A1A;color:#333;
+  padding:7px 20px;cursor:pointer;
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  border-radius:2px;transition:all .2s;
+}
+.dark-btn:hover{border-color:var(--monster-blue);color:var(--monster-blue)}
+
+.dark-tip-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #0D0D0D}
+.dark-tip-n{font-family:'Bebas Neue',cursive;font-size:22px;color:var(--monster-blue);min-width:28px;line-height:1.1}
+.dark-tip-t{font-family:'Barlow',sans-serif;font-size:12px;color:#444;line-height:1.7;padding-top:3px;font-weight:300}
+
+.dark-goal{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid #0D0D0D}
+.dark-goal-check{
+  width:18px;height:18px;border:1px solid #222;border-radius:2px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;
+  transition:all .2s;font-size:10px;color:transparent;background:#0A0A0A;
+}
+.dark-goal-check.done{background:linear-gradient(135deg,var(--monster-blue-dark),var(--monster-blue));border-color:var(--monster-blue);color:#fff}
+.dark-goal-text{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:#444;line-height:1.5;flex:1;letter-spacing:.3px}
+.dark-goal-text.done{color:#1E1E1E;text-decoration:line-through}
+
+.dark-book-item{padding:12px 0;border-bottom:1px solid #0D0D0D;cursor:pointer;transition:all .2s}
+.dark-book-item:hover{padding-left:6px}
+.dark-book-item:hover .dark-book-title{color:var(--monster-blue)}
+.dark-book-n{font-family:'Barlow Condensed',sans-serif;font-size:8px;letter-spacing:2px;color:#1E1E1E;text-transform:uppercase}
+.dark-book-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#555;margin:2px 0;transition:color .2s;letter-spacing:.5px}
+.dark-book-author{font-family:'Barlow',sans-serif;font-size:11px;color:#2A2A2A;font-weight:300}
+.dark-book-summary{font-family:'Barlow',sans-serif;font-size:12px;color:#333;line-height:1.6;margin-top:7px;display:none;padding-top:6px;border-top:1px solid #0D0D0D;font-weight:300}
+.dark-book-item.open .dark-book-summary{display:block}
+.dark-book-item.open .dark-book-title{color:var(--monster-blue)}
+
+.dark-know{padding:26px 22px;border-bottom:1px solid #111;background:#060606}
+.dark-know-box{background:#0A0A0A;border:1px solid #111;padding:18px;border-radius:2px;margin-top:8px}
+.dark-know-text{font-family:'Barlow',sans-serif;font-size:13px;color:#3A3A3A;line-height:1.8;font-weight:300;transition:opacity .3s}
+.dark-know-src{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:#1E1E1E;margin-top:10px;text-transform:uppercase;font-weight:700}
+
+.dark-form-input{
+  background:#0A0A0A;border:1px solid #111;color:#555;
+  padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;
+  border-radius:2px;outline:none;transition:border-color .2s;flex:1;min-width:0;
+}
+.dark-form-input:focus{border-color:var(--monster-blue)}
+.dark-form-input::placeholder{color:#1E1E1E;font-weight:300}
+
+/* ── NOTIFICATION TOAST ──────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:20px;right:20px;z-index:9999;
+  background:linear-gradient(135deg,#FFFFFF,#F5F5F5);
+  border:1px solid var(--monster-blue-pale);
+  border-radius:3px;padding:14px 18px;max-width:280px;
+  box-shadow:0 8px 32px rgba(78,195,224,.15);
+  transform:translateY(120px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1);
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-label{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:3px;color:var(--monster-blue);text-transform:uppercase;margin-bottom:5px}
+.toast-text{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:var(--gray);line-height:1.4}
+
+/* ── DARK SECTION — TYPOGRAPHY UPGRADE ───────────────────────── */
+.dark-card-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:8px;font-weight:900;letter-spacing:5px;
+  color:#4EC3E0;text-transform:uppercase;margin-bottom:14px;
+  border-left:2px solid #4EC3E0;padding-left:8px;
+}
+.dark-card-title{
+  font-family:'Bebas Neue',cursive;
+  font-size:34px;letter-spacing:3px;
+  background:linear-gradient(135deg,#555 0%,#AAAAAA 40%,#E0E0E0 60%,#AAAAAA 80%,#555 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:16px;line-height:1;
+}
+.dark-tip-item{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid #0F0F0F}
+.dark-tip-n{
+  font-family:'Bebas Neue',cursive;font-size:28px;
+  color:#4EC3E0;min-width:34px;line-height:1;
+  text-shadow:0 0 20px rgba(78,195,224,.2);
+}
+.dark-tip-t{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:400;
+  color:#5A5A5A;line-height:1.65;padding-top:5px;letter-spacing:.3px;
+}
+.dark-goal-text{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;
+  color:#5A5A5A;line-height:1.5;flex:1;letter-spacing:.5px;
+}
+.dark-goal-text.done{color:#1E1E1E;text-decoration:line-through}
+.dark-book-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;
+  color:#686868;margin:3px 0;transition:color .2s;letter-spacing:.5px;
+}
+.dark-book-author{font-family:'Barlow',sans-serif;font-size:11px;color:#333;font-weight:400;letter-spacing:.5px}
+.dark-book-summary{
+  font-family:'Barlow',sans-serif;font-size:12px;color:#444;line-height:1.7;
+  margin-top:8px;display:none;padding-top:7px;border-top:1px solid #0F0F0F;font-weight:300;
+}
+.dark-book-item.open .dark-book-title{color:#4EC3E0}
+.dark-book-item.open .dark-book-summary{display:block}
+.dark-know-text{
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:400;
+  color:#4A4A4A;line-height:1.75;letter-spacing:.3px;transition:opacity .3s;
+}
+.dark-know-src{
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:3px;
+  color:#2A2A2A;margin-top:12px;text-transform:uppercase;font-weight:700;
+}
+.dark-quote-text{
+  font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:400;
+  color:#666;max-width:560px;margin:0 auto;line-height:1.45;font-style:italic;
+  transition:opacity .3s ease;letter-spacing:.3px;
+}
+.dark-quote-auth{
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:5px;color:#4EC3E0;margin-top:14px;text-transform:uppercase;
+}
+
+/* ── FOCUS SECTION ──────────────────────────────────────────── */
+.focus-preset{
+  display:flex;flex-direction:column;align-items:center;
+  padding:10px 18px;background:#080808;border:1px solid #1A1A1A;
+  color:#666;cursor:pointer;border-radius:3px;transition:all .2s;
+  font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;line-height:1;
+}
+.focus-preset span{
+  font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;
+  letter-spacing:2px;color:#2A2A2A;text-transform:uppercase;margin-top:3px;
+}
+.focus-preset:hover,.focus-preset.active{
+  border-color:#4EC3E0;color:#D0D0D0;background:#060606;
+}
+.focus-preset.active span{color:#4EC3E0}
+.focus-ctrl-btn{
+  padding:12px 28px;border-radius:3px;cursor:pointer;
+  font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:3px;
+  border:1px solid;transition:all .25s;
+}
+.focus-play{
+  background:linear-gradient(135deg,#2AABBF,#4EC3E0);
+  border-color:#4EC3E0;color:#fff;
+  box-shadow:0 4px 20px rgba(78,195,224,.15);
+}
+.focus-play:hover{box-shadow:0 6px 28px rgba(78,195,224,.25);transform:translateY(-1px)}
+.focus-play.running{background:linear-gradient(135deg,#333,#222);border-color:#333;color:#888;box-shadow:none}
+.focus-reset{background:transparent;border-color:#1A1A1A;color:#333}
+.focus-reset:hover{border-color:#333;color:#555}
+.spotify-card{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:#080808;border:1px solid #111;border-radius:3px;
+  text-decoration:none;transition:all .2s;
+}
+.spotify-card:hover{border-color:#4EC3E0;background:#060606;transform:translateY(-1px)}
+.spotify-card-icon{
+  font-size:20px;color:#4EC3E0;flex-shrink:0;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border:1px solid #1A1A1A;border-radius:2px;
+}
+.spotify-card-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  color:#666;letter-spacing:.5px;
+}
+.spotify-card-sub{
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:2px;color:#2A2A2A;text-transform:uppercase;margin-top:2px;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media(max-width:640px){
+  .hero-title,.dark-title{font-size:48px}
+  .dark-grid{grid-template-columns:1fr}
+  .rank-ladder{grid-template-columns:repeat(3,1fr)}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .habit-days{display:none}
+  .hero-claw,.dark-claw{display:none}
+  .focus-preset{padding:8px 12px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="#" style="text-decoration:none">
+    <span class="nav-logo-m">APEX</span>
+    <span class="nav-logo-ultra">ULTRA</span>
+  </a>
+  <button class="nav-btn active" onclick="showSection('main',this)">Dashboard</button>
+  <button class="nav-btn" onclick="showSection('dark',this)">3 Meses</button>
+  <button class="nav-btn" onclick="showSection('focus',this)">Concentracion</button>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div id="main" class="section active">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">Sistema de Habitos</div>
+    <div class="hero-title">SISTEMA<br>DE HABITOS</div>
+    <div class="hero-sub">Construye tu mejor version — semana a semana</div>
+    <div class="hero-claw">M</div>
+  </div>
+
+  <!-- RANK -->
+  <div class="rank-wrap">
+    <div class="rank-badge bronze" id="rankIcon">
+      BR
+      <span class="rank-badge-sub">Rango</span>
+    </div>
+    <div class="rank-info">
+      <div class="rank-name" id="rankName">BRONCE</div>
+      <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:18%"></div></div>
+      <div class="xp-text" id="xpText">180 / 1000 XP para Plata</div>
+    </div>
+    <div class="rank-pts-wrap">
+      <div class="rank-pts" id="rankPts">180</div>
+      <div class="rank-pts-label">puntos</div>
+    </div>
+  </div>
+
+  <div class="rank-ladder">
+    <div class="rank-step current">
+      <div class="rank-step-ico" style="color:#CD7F32">▲</div>
+      <div class="rank-step-name">Bronce</div>
+      <div class="rank-step-pts">0</div>
+    </div>
+    <div class="rank-step locked">
+      <div class="rank-step-ico" style="color:#AAAAAA">▲</div>
+      <div class="rank-step-name">Plata</div>
+      <div class="rank-step-pts">1k</div>
+    </div>
+    <div class="rank-step locked">
+      <div class="rank-step-ico" style="color:#C8A000">▲</div>
+      <div class="rank-step-name">Oro</div>
+      <div class="rank-step-pts">3k</div>
+    </div>
+    <div class="rank-step locked">
+      <div class="rank-step-ico" style="color:#BBBBBB">▲</div>
+      <div class="rank-step-name">Platino</div>
+      <div class="rank-step-pts">6k</div>
+    </div>
+    <div class="rank-step locked">
+      <div class="rank-step-ico" style="color:#4EC3E0">◆</div>
+      <div class="rank-step-name">Diamante</div>
+      <div class="rank-step-pts">12k</div>
+    </div>
+    <div class="rank-step locked">
+      <div class="rank-step-ico" style="color:#8B00FF">★</div>
+      <div class="rank-step-name">Unreal</div>
+      <div class="rank-step-pts">25k</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statToday">0<span class="stat-unit">%</span></div>
+      <div class="stat-label">Hoy</div>
+      <div class="stat-note up" id="statNote">habitos completados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statStreak">0<span class="stat-unit">d</span></div>
+      <div class="stat-label">Mejor Racha</div>
+      <div class="stat-note">consecutivos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statWeek">S1</div>
+      <div class="stat-label">Semana</div>
+      <div class="stat-note up" id="statXP">+0 XP</div>
+    </div>
+  </div>
+
+  <!-- DAILY TASKS -->
+  <div class="tasks-section">
+    <div class="tasks-header">
+      <div>
+        <div class="section-label">Tareas del Dia</div>
+        <div class="section-title">PENDIENTES</div>
+      </div>
+      <div class="task-date-badge" id="taskDate">—</div>
+    </div>
+
+    <div class="task-progress">
+      <div class="task-prog-bar"><div class="task-prog-fill" id="taskProgFill" style="width:0%"></div></div>
+      <div class="task-prog-text" id="taskProgText">0 / 0 completadas</div>
+    </div>
+
+    <div class="task-list" id="taskList" style="margin-top:10px"></div>
+
+    <div class="task-add-row" style="margin-top:10px">
+      <input class="task-input" id="taskInput" placeholder="Nueva tarea importante..." onkeydown="if(event.key==='Enter')addTask()">
+      <select class="prio-select" id="priSelect">
+        <option value="alta">Alta</option>
+        <option value="media" selected>Media</option>
+        <option value="baja">Baja</option>
+      </select>
+      <button class="task-add-btn" onclick="addTask()">+ Agregar</button>
+    </div>
+  </div>
+
+  <!-- HABITS -->
+  <div class="habits-section">
+    <div class="tasks-header" style="margin-bottom:14px">
+      <div>
+        <div class="section-label">Tracker Semanal</div>
+        <div class="section-title">HABITOS</div>
+      </div>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--silver-light);letter-spacing:2px;text-transform:uppercase" id="todayLabel"></span>
+    </div>
+
+    <div class="week-tabs">
+      <button class="week-tab active" onclick="selectWeek(0,this)">Esta Semana</button>
+      <button class="week-tab" onclick="selectWeek(-1,this)">Sem. Pasada</button>
+      <button class="week-tab" onclick="selectWeek(-2,this)">2 Atras</button>
+      <button class="week-tab" onclick="selectWeek(-3,this)">3 Atras</button>
+    </div>
+
+    <div class="habit-grid" id="habitGrid"></div>
+    <button class="add-habit-btn" onclick="toggleHabitForm()">+ Nuevo Habito</button>
+    <div class="add-form" id="habitForm">
+      <input class="form-input" id="habitNameInput" placeholder="Nombre del habito...">
+      <div class="color-row">
+        <span class="color-label">Color</span>
+        <div class="color-dot sel" style="background:#4EC3E0" data-c="#4EC3E0" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#888888" data-c="#888888" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#AAAAAA" data-c="#AAAAAA" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#2AABBF" data-c="#2AABBF" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#555555" data-c="#555555" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#C8C8C8" data-c="#C8C8C8" onclick="pickColor(this)"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="addHabit()">Agregar</button>
+        <button class="btn-secondary" onclick="toggleHabitForm()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-section">
+    <div style="margin-bottom:12px">
+      <div class="section-label">Visualizacion</div>
+      <div class="section-title">PROGRESO</div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchChart('bar',this)">Semanal</button>
+        <button class="chart-tab" onclick="switchChart('line',this)">Mensual</button>
+        <button class="chart-tab" onclick="switchChart('radar',this)">Habitos</button>
+      </div>
+      <div style="position:relative;height:200px">
+        <canvas id="mainChart" role="img" aria-label="Grafica de progreso">Progreso de habitos.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOK -->
+  <div class="book-section">
+    <div style="margin-bottom:12px">
+      <div class="section-label">Lectura Activa</div>
+      <div class="section-title">LIBRO DE LA SEMANA</div>
+    </div>
+    <div class="book-wrap">
+      <div class="book-title-text" id="bowTitle">HABITOS ATOMICOS</div>
+      <div class="book-author-text" id="bowAuthor">James Clear</div>
+      <div class="book-prog-label">
+        <span>Progreso de Lectura</span>
+        <span id="bowPct">0%</span>
+      </div>
+      <div class="book-bar"><div class="book-fill" id="bowFill" style="width:0%"></div></div>
+      <input type="range" min="0" max="100" value="0" id="bowRange" oninput="updateBow(this.value)" style="width:100%;cursor:pointer;accent-color:var(--monster-blue)">
+      <div class="book-tip" id="bowTip">Los pequeños cambios del 1% parecen insignificantes en el momento, pero a lo largo de meses y anos crean una diferencia extraordinaria.</div>
+      <button class="book-change-btn" onclick="toggleBookPicker()">Cambiar Libro</button>
+    </div>
+    <div class="book-picker" id="bookPicker">
+      <div class="section-label" style="margin-bottom:8px">Seleccionar libro</div>
+      <select class="book-select" id="bookSelect">
+        <option value="0">Habitos Atomicos — James Clear</option>
+        <option value="1">El Hombre en Busca de Sentido — Viktor Frankl</option>
+        <option value="2">Deep Work — Cal Newport</option>
+        <option value="3">Meditaciones — Marco Aurelio</option>
+        <option value="4">El Obstaculo es el Camino — Ryan Holiday</option>
+        <option value="5">Sapiens — Yuval Noah Harari</option>
+        <option value="6">1984 — George Orwell</option>
+        <option value="7">El Almanaque de Naval — Eric Jorgenson</option>
+        <option value="8">Pensar Rapido, Pensar Despacio — Daniel Kahneman</option>
+        <option value="9">Minimalismo Digital — Cal Newport</option>
+      </select>
+      <button class="btn-primary" onclick="setBook()">Confirmar</button>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="cal-section">
+    <div style="margin-bottom:12px">
+      <div class="section-label">Planificacion</div>
+      <div class="section-title">CALENDARIO</div>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">&#8592; Ant</button>
+        <span class="cal-month" id="calLabel">MAYO 2026</span>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">Sig &#8594;</button>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-h">Dom</div><div class="cal-h">Lun</div><div class="cal-h">Mar</div>
+        <div class="cal-h">Mie</div><div class="cal-h">Jue</div><div class="cal-h">Vie</div><div class="cal-h">Sab</div>
+      </div>
+      <div class="cal-grid" id="calBody"></div>
+      <div class="cal-events-box" id="calEvents">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--silver-light);text-transform:uppercase">Selecciona un dia para agregar evento</div>
+      </div>
+      <input class="cal-inp" id="calInput" placeholder="Agregar evento... (Enter)" onkeydown="if(event.key==='Enter')addCalEvent()">
+      <div class="cal-chart-wrap">
+        <div class="cal-chart-label">Eventos por Semana</div>
+        <div style="position:relative;height:90px">
+          <canvas id="calChart" role="img" aria-label="Eventos del mes">Distribucion de eventos.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══════════════ DARK — 3 MESES HABITOS ═══════════════ -->
+<div id="dark" class="section dark-body">
+
+  <div class="dark-hero">
+    <div class="dark-scan"></div>
+    <div class="dark-eyebrow">Disciplina — Conocimiento — Dominio</div>
+    <div class="dark-title">3 MESES<br>HABITOS</div>
+    <div class="dark-sub">+ ZERO EXCUSAS — ZERO LIMITES +</div>
+    <div class="dark-claw">M</div>
+  </div>
+
+  <!-- QUOTE -->
+  <div class="dark-quote">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:5px;color:#1E1E1E;text-transform:uppercase;margin-bottom:18px">Frase del Dia</div>
+    <div class="dark-quote-text" id="darkQuote"></div>
+    <div class="dark-quote-auth" id="darkAuthor"></div>
+    <button class="dark-btn" onclick="nextQuote()">Siguiente Frase</button>
+  </div>
+
+  <!-- TIPS + GOALS -->
+  <div class="dark-grid">
+    <div class="dark-card">
+      <div class="dark-card-label">Habitos Atomicos — James Clear</div>
+      <div class="dark-card-title">Las 4 Leyes</div>
+      <div id="darkTips"></div>
+    </div>
+    <div class="dark-card">
+      <div class="dark-card-label">Metas Claras</div>
+      <div class="dark-card-title">Este Mes</div>
+      <div id="darkGoals"></div>
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <input class="dark-form-input" id="newGoalInput" placeholder="Nueva meta...">
+        <button onclick="addGoal()" style="padding:9px 14px;background:linear-gradient(135deg,var(--monster-blue-dark),var(--monster-blue));border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;font-weight:700">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KNOWLEDGE -->
+  <div class="dark-know">
+    <div class="dark-card-label">Conocimiento — Tiempos Muertos</div>
+    <div class="dark-card-title">Dato del Dia</div>
+    <div class="dark-know-box">
+      <div class="dark-know-text" id="darkKnow"></div>
+      <div class="dark-know-src" id="darkKnowSrc"></div>
+    </div>
+    <button class="dark-btn" onclick="nextKnowledge()">Siguiente Dato</button>
+  </div>
+
+  <!-- BOOKS -->
+  <div class="dark-grid" style="border-top:1px solid #111">
+    <div class="dark-card">
+      <div class="dark-card-label">Biblioteca — Desarrollo</div>
+      <div class="dark-card-title">Top 10</div>
+      <div id="darkBooksDev"></div>
+    </div>
+    <div class="dark-card">
+      <div class="dark-card-label">Variados — Esenciales</div>
+      <div class="dark-card-title">Imprescindibles</div>
+      <div id="darkBooksVar"></div>
+    </div>
+  </div>
+
+</div><!-- /dark -->
+
+<!-- ═══════════════ FOCUS — MODO CONCENTRACION ═══════════════ -->
+<div id="focus" class="section" style="background:#050505;min-height:100vh">
+
+  <!-- HERO -->
+  <div style="position:relative;overflow:hidden;padding:50px 28px 36px;background:linear-gradient(160deg,#080808,#000);border-bottom:1px solid #111;text-align:center">
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#4EC3E0,transparent);animation:scan 4s linear infinite"></div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:6px;color:#4EC3E0;text-transform:uppercase;margin-bottom:10px">+ MODO CONCENTRACION +</div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:64px;letter-spacing:6px;line-height:1;background:linear-gradient(135deg,#444,#999,#D8D8D8,#999,#444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">FOCUS<br>ZONE</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:300;letter-spacing:5px;color:#2A2A2A;text-transform:uppercase;margin-top:8px">Elimina el ruido — domina el tiempo</div>
+  </div>
+
+  <!-- TIMER -->
+  <div style="padding:40px 24px 20px;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid #111">
+
+    <!-- Preset buttons -->
+    <div style="display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;justify-content:center">
+      <button class="focus-preset" onclick="setPreset(25)">25 MIN<span>Pomodoro</span></button>
+      <button class="focus-preset" onclick="setPreset(45)">45 MIN<span>Deep Work</span></button>
+      <button class="focus-preset" onclick="setPreset(60)">60 MIN<span>Bloque</span></button>
+      <button class="focus-preset" onclick="setPreset(90)">90 MIN<span>Maximo</span></button>
+    </div>
+
+    <!-- Clock face -->
+    <div style="position:relative;width:240px;height:240px;margin-bottom:24px">
+      <svg width="240" height="240" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+        <circle cx="120" cy="120" r="108" fill="none" stroke="#111" stroke-width="6"/>
+        <circle id="timerRing" cx="120" cy="120" r="108" fill="none" stroke="url(#timerGrad)" stroke-width="6"
+          stroke-dasharray="678.6" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset .5s ease"/>
+        <defs>
+          <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2AABBF"/>
+            <stop offset="100%" stop-color="#7DD6EC"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div id="timerDisplay" style="font-family:'Bebas Neue',cursive;font-size:60px;letter-spacing:4px;color:#D0D0D0;line-height:1;transition:color .3s">25:00</div>
+        <div id="timerStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:4px;color:#2A2A2A;text-transform:uppercase;margin-top:4px">En espera</div>
+      </div>
+    </div>
+
+    <!-- Custom time input -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:22px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:#333;text-transform:uppercase">Personalizar</span>
+      <input id="customMin" type="number" min="1" max="180" value="25" style="width:60px;background:#0A0A0A;border:1px solid #1A1A1A;color:#888;padding:7px 10px;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;border-radius:2px;outline:none;text-align:center">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:#333">MIN</span>
+      <button onclick="setCustomTime()" style="padding:7px 14px;background:transparent;border:1px solid #1A1A1A;color:#444;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s" onmouseover="this.style.borderColor='#4EC3E0';this.style.color='#4EC3E0'" onmouseout="this.style.borderColor='#1A1A1A';this.style.color='#444'">Setear</button>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;gap:10px;align-items:center">
+      <button id="focusPlayBtn" onclick="toggleTimer()" class="focus-ctrl-btn focus-play">▶ INICIAR</button>
+      <button onclick="resetTimer()" class="focus-ctrl-btn focus-reset">↺ RESET</button>
+    </div>
+
+    <!-- Session counter -->
+    <div style="margin-top:20px;display:flex;align-items:center;gap:16px">
+      <div style="text-align:center">
+        <div id="sessCount" style="font-family:'Bebas Neue',cursive;font-size:32px;color:#4EC3E0;line-height:1">0</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;color:#222;text-transform:uppercase">Sesiones Hoy</div>
+      </div>
+      <div style="width:1px;height:36px;background:#111"></div>
+      <div style="text-align:center">
+        <div id="totalFocusMin" style="font-family:'Bebas Neue',cursive;font-size:32px;color:#888;line-height:1">0</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;color:#222;text-transform:uppercase">Min Enfocados</div>
+      </div>
+      <div style="width:1px;height:36px;background:#111"></div>
+      <div style="text-align:center">
+        <div id="focusXPEarned" style="font-family:'Bebas Neue',cursive;font-size:32px;color:#888;line-height:1">0</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;color:#222;text-transform:uppercase">XP Focus</div>
+      </div>
+    </div>
+
+    <!-- Focus task label -->
+    <div style="margin-top:20px;width:100%;max-width:400px">
+      <input id="focusTask" placeholder="En que te vas a concentrar..." style="width:100%;background:#080808;border:1px solid #111;color:#666;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:.5px;border-radius:2px;outline:none;text-align:center;transition:border-color .2s" onfocus="this.style.borderColor='#4EC3E0'" onblur="this.style.borderColor='#111'">
+    </div>
+  </div>
+
+  <!-- SPOTIFY -->
+  <div style="padding:28px 24px;border-bottom:1px solid #111">
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:5px;color:#4EC3E0;text-transform:uppercase;margin-bottom:6px">Musica Para Concentrarse</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:3px;background:linear-gradient(135deg,#444,#999,#D0D0D0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">SPOTIFY</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <a href="https://open.spotify.com/playlist/37i9dQZF1DX8NTLI2TtZa6" target="_blank" class="spotify-card">
+        <div class="spotify-card-icon">▶</div>
+        <div>
+          <div class="spotify-card-title">Deep Focus</div>
+          <div class="spotify-card-sub">Work & Study</div>
+        </div>
+      </a>
+      <a href="https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ" target="_blank" class="spotify-card">
+        <div class="spotify-card-icon">▶</div>
+        <div>
+          <div class="spotify-card-title">Brain Food</div>
+          <div class="spotify-card-sub">Instrumental</div>
+        </div>
+      </a>
+      <a href="https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO" target="_blank" class="spotify-card">
+        <div class="spotify-card-icon">▶</div>
+        <div>
+          <div class="spotify-card-title">Peaceful Piano</div>
+          <div class="spotify-card-sub">Concentracion</div>
+        </div>
+      </a>
+      <a href="https://open.spotify.com/playlist/37i9dQZF1DXc8kgYqQLMfH" target="_blank" class="spotify-card">
+        <div class="spotify-card-icon">▶</div>
+        <div>
+          <div class="spotify-card-title">Coding Mode</div>
+          <div class="spotify-card-sub">Electronic Flow</div>
+        </div>
+      </a>
+      <a href="https://open.spotify.com/playlist/37i9dQZF1DX3Ogo9pFvBkY" target="_blank" class="spotify-card">
+        <div class="spotify-card-icon">▶</div>
+        <div>
+          <div class="spotify-card-title">Beats to Think To</div>
+          <div class="spotify-card-sub">Lo-Fi</div>
+        </div>
+      </a>
+      <a href="https://open.spotify.com" target="_blank" class="spotify-card" style="border-color:#1DB954;background:rgba(29,185,84,.04)">
+        <div class="spotify-card-icon" style="color:#1DB954">♫</div>
+        <div>
+          <div class="spotify-card-title" style="color:#1DB954">Abrir Spotify</div>
+          <div class="spotify-card-sub">Tu biblioteca</div>
+        </div>
+      </a>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:#1A1A1A;letter-spacing:1px;text-align:center">Los enlaces abren Spotify en una nueva pestaña</div>
+  </div>
+
+  <!-- FOCUS TIPS -->
+  <div style="padding:28px 24px 40px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:5px;color:#4EC3E0;text-transform:uppercase;margin-bottom:6px">Protocolo</div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:3px;background:linear-gradient(135deg,#444,#999,#D0D0D0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px">Deep Work</div>
+    <div id="focusTipsList"></div>
+  </div>
+
+</div><!-- /focus -->
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-label">APEX ULTRA</div>
+  <div class="toast-text" id="toastText"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const QUOTES=[
+  {t:"No necesitas ser extremo, solo consistente.",a:"James Clear"},
+  {t:"La disciplina es el puente entre metas y logros.",a:"Jim Rohn"},
+  {t:"El que tiene un por que puede soportar casi cualquier como.",a:"Friedrich Nietzsche"},
+  {t:"Primero forma tus habitos, luego tus habitos te forman a ti.",a:"John Dryden"},
+  {t:"No eres el resultado de lo que te paso. Eres el resultado de lo que decides hacer con ello.",a:"Viktor Frankl"},
+  {t:"El dolor de la disciplina es menor que el dolor del arrepentimiento.",a:"Jim Rohn"},
+  {t:"Si buscas resultados distintos, no hagas siempre lo mismo.",a:"Albert Einstein"},
+  {t:"La unica manera de hacer un gran trabajo es amar lo que haces.",a:"Steve Jobs"},
+  {t:"Cada mañana eres libre de reinventarte.",a:"Anonimo"},
+  {t:"El exito no es definitivo, el fracaso no es fatal. Lo que cuenta es el coraje de continuar.",a:"Winston Churchill"},
+];
+const TIPS=[
+  {n:"01",t:"Hacerlo obvio — Diseña tu entorno para que el habito correcto sea la opcion mas facil y visible."},
+  {n:"02",t:"Hacerlo atractivo — Vincula habitos nuevos a cosas que ya disfrutas para aumentar la motivacion."},
+  {n:"03",t:"Hacerlo sencillo — Reduce la friccion al minimo. Dos minutos para empezar es suficiente."},
+  {n:"04",t:"Hacerlo satisfactorio — El refuerzo inmediato mantiene el ciclo. Celebra los pequenos logros."},
+  {n:"05",t:"La regla del 1% — Una mejora de 1% diaria te hace 37 veces mejor al final del ano."},
+  {n:"06",t:"Apila habitos — Ancla el nuevo habito inmediatamente despues de uno ya establecido."},
+];
+const KNOWLEDGE=[
+  {t:"La neuroplasticidad cerebral permite que el cerebro reorganice sus conexiones sinápticas a cualquier edad. Cada vez que repites un habito, el camino neuronal se vuelve mas eficiente, como una ruta que se pavimenta con el uso constante.",s:"Neurociencia del Habito"},
+  {t:"Segun un estudio de la University College London, formar un habito toma en promedio 66 dias, no 21 como se creia. La complejidad de la conducta afecta significativamente ese tiempo.",s:"Phillippa Lally — UCL, 2010"},
+  {t:"El sistema de recompensa dopaminergico se activa antes de que la recompensa ocurra. Aprendes a anticipar el placer. Por eso los habitos pueden volverse automaticos incluso sin que la recompensa llegue cada vez.",s:"Neurociencia Conductual"},
+  {t:"Marco Aurelio escribia sus Meditaciones solo para el mismo, nunca con intencion de publicarlas. Lo que conocemos como filosofia estoica fue, en esencia, un diario personal de disciplina mental.",s:"Historia del Estoicismo"},
+  {t:"La tecnica Pomodoro — 25 minutos de trabajo profundo seguido de 5 de descanso — aprovecha la curva natural de atencion del cerebro humano, que rara vez supera los 30 minutos sin degradarse.",s:"Francesco Cirillo — Deep Work"},
+  {t:"Naval Ravikant sostiene que la lectura especifica supera a la lectura masiva. Un libro leido con profundidad y aplicado en la vida real vale mas que cien libros leidos superficialmente.",s:"El Almanaque de Naval"},
+  {t:"James Clear distingue metas basadas en resultados (quiero correr un maraton) y basadas en identidad (soy un corredor). Las segundas crean cambios sostenibles porque alteran quien eres, no solo lo que haces.",s:"Habitos Atomicos"},
+];
+const BOOKS_DEV=[
+  {t:"Habitos Atomicos",a:"James Clear",s:"Los cambios del 1% se acumulan exponencialmente. Construye sistemas, no metas. La identidad es el motor del cambio real."},
+  {t:"El Hombre en Busca de Sentido",a:"Viktor Frankl",s:"Incluso en circunstancias extremas, puedes elegir tu actitud. El sentido es el motor de la supervivencia y el crecimiento."},
+  {t:"Pensar Rapido, Pensar Despacio",a:"Daniel Kahneman",s:"Dos sistemas coexisten: el rapido (intuitivo, sesgado) y el lento (racional). Entenderlos evita errores sistematicos de juicio."},
+  {t:"Deep Work",a:"Cal Newport",s:"La concentracion profunda es una habilidad escasa y valiosa. Eliminar distracciones y trabajar en bloques es clave del alto rendimiento."},
+  {t:"Meditaciones",a:"Marco Aurelio",s:"El control de las reacciones internas es el unico poder real. Lo externo no puede perjudicarte sin tu consentimiento."},
+  {t:"Principios",a:"Ray Dalio",s:"La verdad radical y la transparencia crean decisiones superiores. Los principios escritos reducen los errores repetidos."},
+  {t:"El Obstaculo es el Camino",a:"Ryan Holiday",s:"Cada obstaculo es material para el crecimiento. La percepcion correcta convierte problemas en oportunidades."},
+  {t:"Poder sin Limites",a:"Tony Robbins",s:"Las creencias limitantes son programacion mental que puede reprogramarse. El estado fisico influye en el estado mental."},
+  {t:"Minimalismo Digital",a:"Cal Newport",s:"La atencion es el recurso mas valioso del siglo XXI. Usar tecnologia de forma intencional restaura el control sobre tu vida."},
+  {t:"El Almanaque de Naval",a:"Eric Jorgenson",s:"Busca riqueza, no dinero. Lee para entender el mundo. El aprendizaje compuesto supera al capital compuesto."},
+];
+const BOOKS_VAR=[
+  {t:"1984",a:"George Orwell",s:"El lenguaje moldea el pensamiento. Quien controla las palabras controla la realidad. Una advertencia vigente sobre los mecanismos del poder."},
+  {t:"Sapiens",a:"Yuval Noah Harari",s:"La capacidad de crear ficciones compartidas — dinero, naciones, leyes — distingue al Homo sapiens de cualquier otra especie."},
+  {t:"Cien Anos de Soledad",a:"Gabriel Garcia Marquez",s:"La historia latinoamericana codificada como mito. Una meditacion sobre la memoria, el tiempo ciclico y la soledad humana."},
+  {t:"El Problema de los Tres Cuerpos",a:"Cixin Liu",s:"Si el universo es una selva oscura, la supervivencia exige el silencio. Una de las ideas mas perturbadoras de la ciencia ficcion."},
+  {t:"Breve Historia del Tiempo",a:"Stephen Hawking",s:"El tiempo puede curvarse y detenerse cerca de agujeros negros. Hawking hizo accesibles ideas que desafian toda intuicion humana."},
+  {t:"Armas, Germenes y Acero",a:"Jared Diamond",s:"La geografia y la biologia, no la raza ni la inteligencia, determinaron que sociedades dominaron el mundo."},
+  {t:"El Nombre de la Rosa",a:"Umberto Eco",s:"Un crimen medieval como pretexto para explorar la semiotica, el poder de los textos prohibidos y la razon como herramienta imperfecta."},
+  {t:"Fahrenheit 451",a:"Ray Bradbury",s:"Una sociedad que quema libros lo hace porque la gente dejo de leer antes. La censura mas eficiente es la indiferencia."},
+];
+const BOOK_TIPS=[
+  {t:"HABITOS ATOMICOS",a:"James Clear",tip:"Los pequeños cambios del 1% parecen insignificantes en el momento, pero a lo largo de meses y anos crean una diferencia extraordinaria."},
+  {t:"EL HOMBRE EN BUSCA DE SENTIDO",a:"Viktor Frankl",tip:"Entre el estimulo y la respuesta hay un espacio. En ese espacio esta tu poder de elegir. En tu eleccion esta tu crecimiento y tu libertad."},
+  {t:"DEEP WORK",a:"Cal Newport",tip:"Una hora de trabajo profundo sin distracciones equivale a tres o cuatro horas de trabajo fragmentado. La profundidad produce resultados desproporcionados."},
+  {t:"MEDITACIONES",a:"Marco Aurelio",tip:"Comienza cada mañana preparado. Hoy me encontrare con personas ingratas, arrogantes, deshonestas. Pero yo veo que el que peca contra el projimo se hace dano a si mismo."},
+  {t:"EL OBSTACULO ES EL CAMINO",a:"Ryan Holiday",tip:"El fuego prueba el oro, la adversidad prueba a los hombres fuertes. Lo que te bloquea es exactamente lo que te va a construir."},
+  {t:"SAPIENS",a:"Yuval Noah Harari",tip:"El Homo sapiens domino el mundo no por ser el mas fuerte sino por ser el unico que pudo cooperar en masas entre extranios."},
+  {t:"1984",a:"George Orwell",tip:"Quien controla el pasado controla el futuro. Quien controla el presente controla el pasado."},
+  {t:"EL ALMANAQUE DE NAVAL",a:"Eric Jorgenson",tip:"Juega juegos de largo plazo con personas de largo plazo. En el largo plazo, tu reputacion es tu activo mas valioso."},
+  {t:"PENSAR RAPIDO, PENSAR DESPACIO",a:"Daniel Kahneman",tip:"El Sistema 1 opera automaticamente. El Sistema 2 requiere atencion deliberada. La mayoria de nuestros errores vienen de dejar al Sistema 1 decidir cuando deberia decidir el 2."},
+  {t:"MINIMALISMO DIGITAL",a:"Cal Newport",tip:"No es que uses demasiado el telefono. Es que el telefono esta diseñado para ser irresistible. La atencion intencional requiere reglas, no fuerza de voluntad."},
+];
+const RANK_LEVELS=[
+  {name:'BRONCE',short:'BR',cls:'bronze',min:0,max:1000,next:'Plata'},
+  {name:'PLATA',short:'PL',cls:'silver',min:1000,max:3000,next:'Oro'},
+  {name:'ORO',short:'OR',cls:'gold',min:3000,max:6000,next:'Platino'},
+  {name:'PLATINO',short:'PT',cls:'platinum',min:6000,max:12000,next:'Diamante'},
+  {name:'DIAMANTE',short:'DI',cls:'diamond',min:12000,max:25000,next:'Unreal'},
+  {name:'UNREAL',short:'UN',cls:'unreal',min:25000,max:25001,next:'Maximo'},
+];
+const NOTIFS=[
+  "Toca revisar tus habitos de manana.",
+  "Mantuviste la racha ayer. No la rompas hoy.",
+  "Recuerda: el 1% diario suma 37x al ano.",
+  "Abre tu libro. 20 paginas. Ahora.",
+  "Revisa tus tareas del dia. Cuantas completaste?",
+  "Pon el telefono y trabaja en profundidad 25 minutos.",
+  "La consistencia supera al talento. Muevete.",
+  "Cada habito marcado son 10 XP. No los pierdas.",
+];
+const DAY_NAMES=['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
+const MONTH_NAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// ── PERSISTENCE ───────────────────────────────────────────────
+const SAVE_KEY='apex_ultra_v1';
+
+function saveAll(){
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({
+      habits,tasks,goalsData,goalsChecked,totalXP,
+      currentWeekOffset,calYear,calMonth,calEvents,
+      bowProgress,bowBookIdx
+    }));
+  }catch(e){console.warn('Save failed',e);}
+}
+
+function loadAll(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    // Migrate old habits that used weeks:{} to logs:{}
+    if(d.habits) habits=d.habits.map(h=>{
+      if(!h.logs) h.logs={};
+      return h;
+    });
+    if(d.tasks)        tasks=d.tasks;
+    if(d.goalsData)    goalsData=d.goalsData;
+    if(d.goalsChecked) goalsChecked=d.goalsChecked;
+    if(typeof d.totalXP==='number') totalXP=d.totalXP;
+    if(typeof d.currentWeekOffset==='number') currentWeekOffset=d.currentWeekOffset;
+    if(typeof d.calYear==='number')  calYear=d.calYear;
+    if(typeof d.calMonth==='number') calMonth=d.calMonth;
+    if(d.calEvents)    calEvents=d.calEvents;
+    if(typeof d.bowProgress==='number') bowProgress=d.bowProgress;
+    if(typeof d.bowBookIdx==='number')  bowBookIdx=d.bowBookIdx;
+    return true;
+  }catch(e){console.warn('Load failed',e);return false;}
+}
+
+// ── DATE HELPERS ──────────────────────────────────────────────
+// Returns "YYYY-MM-DD" for any Date object
+function dateKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// Returns Date for a key
+function keyToDate(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
+// Returns array of 7 Date objects for the ISO week containing a given Date (Mon–Sun)
+function getWeekDates(refDate){
+  const d=new Date(refDate);
+  const day=d.getDay(); // 0=Sun
+  const diff=day===0?-6:1-day; // shift to Monday
+  d.setDate(d.getDate()+diff);
+  return Array.from({length:7},(_,i)=>{const x=new Date(d);x.setDate(d.getDate()+i);return x;});
+}
+// Week offset from today's week (0=current, -1=last week, etc.)
+function getWeekDatesOffset(offset){
+  const ref=new Date();
+  ref.setDate(ref.getDate()+offset*7);
+  return getWeekDates(ref);
+}
+
+// ── STATE ─────────────────────────────────────────────────────
+// habits now store: {name, color, logs: {"YYYY-MM-DD": true}, createdAt: "YYYY-MM-DD"}
+let habits=[
+  {name:"Lectura Diaria",color:"#4EC3E0",logs:{},createdAt:dateKey(new Date())},
+  {name:"Ejercicio",color:"#888888",logs:{},createdAt:dateKey(new Date())},
+  {name:"Meditacion",color:"#AAAAAA",logs:{},createdAt:dateKey(new Date())},
+];
+let tasks=[];
+let goalsData=["Completar 21 dias sin romper la cadena","Leer 20 paginas diarias","Meditar 10 minutos cada manana","Entrenar 4 veces por semana","Reducir tiempo en redes a 1 hora/dia"];
+let goalsChecked=new Array(50).fill(false);
+let totalXP=0;
+let currentWeekOffset=0; // 0=this week, -1=last week, -2=2 weeks ago, -3=3 weeks ago
+let quoteIdx=0;
+let knowIdx=0;
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth();
+let calEvents={};
+let selectedCalDay=null;
+let selColor='#4EC3E0';
+let chartMode='bar';
+let mainChartInst=null;
+let calChartInst=null;
+let bowProgress=0;
+let bowBookIdx=0;
+const now=new Date();
+const TODAY_KEY=dateKey(now);
+
+// ── NAV ───────────────────────────────────────────────────────
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── TASKS ─────────────────────────────────────────────────────
+function renderTasks(){
+  const list=document.getElementById('taskList');
+  list.innerHTML='';
+  if(!tasks.length){
+    list.innerHTML='<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;letter-spacing:2px;color:var(--silver-light);text-transform:uppercase;padding:12px 0;text-align:center">Sin tareas — agrega tu primera</div>';
+  } else {
+    tasks.forEach((t,i)=>{
+      const div=document.createElement('div');
+      div.className='task-item'+(t.done?' done':'');
+      div.innerHTML=`
+        <div class="task-check${t.done?' done':''}" onclick="toggleTask(${i})"></div>
+        <div class="task-text">${t.text}</div>
+        <div class="task-priority ${t.prio}">${t.prio.toUpperCase()}</div>
+        <button class="task-del" onclick="deleteTask(${i})" title="Eliminar">&#10005;</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+  // progress
+  const done=tasks.filter(t=>t.done).length;
+  const pct=tasks.length?Math.round(done/tasks.length*100):0;
+  document.getElementById('taskProgFill').style.width=pct+'%';
+  document.getElementById('taskProgText').textContent=done+' / '+tasks.length+' completadas';
+}
+
+function addTask(){
+  const inp=document.getElementById('taskInput');
+  const text=inp.value.trim();
+  if(!text) return;
+  const prio=document.getElementById('priSelect').value;
+  tasks.push({text,prio,done:false});
+  inp.value='';
+  renderTasks();
+  totalXP+=5;
+  updateRank();
+  saveAll();
+  showToast('Tarea agregada. Completala y suma XP.');
+}
+
+function toggleTask(i){
+  tasks[i].done=!tasks[i].done;
+  if(tasks[i].done){totalXP+=15;updateRank();showToast(NOTIFS[Math.floor(Math.random()*NOTIFS.length)]);}
+  renderTasks();
+  saveAll();
+}
+
+function deleteTask(i){
+  tasks.splice(i,1);
+  renderTasks();
+  saveAll();
+}
+
+// ── HABITS ────────────────────────────────────────────────────
+function renderHabits(){
+  const grid=document.getElementById('habitGrid');
+  grid.innerHTML='';
+  const weekDates=getWeekDatesOffset(currentWeekOffset);
+  const todayK=TODAY_KEY;
+
+  habits.forEach((h,idx)=>{
+    if(!h.logs) h.logs={};
+    const streak=calcStreak(h);
+    const doneDays=weekDates.filter(d=>h.logs[dateKey(d)]).length;
+    const pct=Math.round(doneDays/7*100);
+    const div=document.createElement('div');
+    div.className='habit-row';
+    const daysHTML=weekDates.map((d,i)=>{
+      const k=dateKey(d);
+      const done=!!h.logs[k];
+      const isToday=k===todayK;
+      const dayName=DAY_NAMES[d.getDay()];
+      return `<div class="habit-day${done?' done':''}${isToday?' today-col':''}" onclick="toggleDay(${idx},'${k}')" title="${dayName} ${d.getDate()}">${dayName[0]}</div>`;
+    }).join('');
+    div.innerHTML=`
+      <div class="habit-header">
+        <div class="habit-color" style="background:${h.color}"></div>
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-days">${daysHTML}</div>
+      </div>
+      <div class="habit-streak">
+        <span style="min-width:52px;color:var(--silver-light)">${streak}d racha</span>
+        <div class="streak-bar"><div class="streak-fill" style="width:${pct}%"></div></div>
+        <span style="color:var(--silver-light)">${pct}%</span>
+        <span style="margin-left:10px;cursor:pointer;color:var(--silver-light);transition:color .2s" onclick="removeHabit(${idx})" onmouseover="this.style.color='#CC3333'" onmouseout="this.style.color='var(--silver-light)'" title="Eliminar">&#10005;</span>
+      </div>`;
+    grid.appendChild(div);
+  });
+  updateStats();
+  updateChart();
+}
+
+function toggleDay(hIdx, dateK){
+  if(!habits[hIdx].logs) habits[hIdx].logs={};
+  const was=!!habits[hIdx].logs[dateK];
+  if(was){
+    delete habits[hIdx].logs[dateK];
+    totalXP=Math.max(0,totalXP-10);
+  } else {
+    habits[hIdx].logs[dateK]=true;
+    totalXP+=10;
+    showToast(NOTIFS[Math.floor(Math.random()*NOTIFS.length)]);
+  }
+  updateRank();
+  renderHabits();
+  saveAll();
+}
+
+function calcStreak(h){
+  if(!h.logs) return 0;
+  let streak=0;
+  const d=new Date();
+  // walk backwards from today
+  for(let i=0;i<365;i++){
+    const k=dateKey(d);
+    if(h.logs[k]){streak++;}
+    else if(i>0){break;} // gap breaks streak (allow today to be unmarked without breaking)
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+
+function selectWeek(offset, btn){
+  currentWeekOffset=offset;
+  document.querySelectorAll('.week-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // update label
+  const wDates=getWeekDatesOffset(offset);
+  const label=offset===0?'Esta Semana':offset===-1?'Sem. Pasada':'Sem. '+(offset*-1+' atras');
+  document.getElementById('statWeek').textContent=label.substring(0,3);
+  renderHabits();
+  saveAll();
+}
+
+function toggleHabitForm(){
+  const f=document.getElementById('habitForm');
+  f.classList.toggle('visible');
+}
+
+function pickColor(dot){
+  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('sel'));
+  dot.classList.add('sel');
+  selColor=dot.dataset.c;
+}
+
+function addHabit(){
+  const name=document.getElementById('habitNameInput').value.trim();
+  if(!name) return;
+  habits.push({name,color:selColor,logs:{},createdAt:dateKey(new Date())});
+  document.getElementById('habitNameInput').value='';
+  document.getElementById('habitForm').classList.remove('visible');
+  renderHabits();
+  saveAll();
+}
+
+function removeHabit(idx){
+  habits.splice(idx,1);
+  renderHabits();
+  saveAll();
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+function updateStats(){
+  const todayDone=habits.filter(h=>h.logs&&h.logs[TODAY_KEY]).length;
+  const pct=habits.length?Math.round(todayDone/habits.length*100):0;
+  document.getElementById('statToday').innerHTML=pct+'<span class="stat-unit">%</span>';
+  let best=0;
+  habits.forEach(h=>{const s=calcStreak(h);if(s>best)best=s;});
+  document.getElementById('statStreak').innerHTML=best+'<span class="stat-unit">d</span>';
+  // XP this week (current week Mon-Sun)
+  const weekDates=getWeekDatesOffset(0);
+  const wkXP=habits.reduce((acc,h)=>acc+weekDates.filter(d=>h.logs&&h.logs[dateKey(d)]).length*10,0);
+  document.getElementById('statXP').textContent='+'+wkXP+' XP';
+  const d=now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('todayLabel').textContent=d;
+  document.getElementById('taskDate').textContent=now.toLocaleDateString('es-MX',{day:'numeric',month:'short'}).toUpperCase();
+}
+
+// ── RANK ──────────────────────────────────────────────────────
+function updateRank(){
+  const r=RANK_LEVELS.find(l=>totalXP<l.max)||RANK_LEVELS[RANK_LEVELS.length-1];
+  const range=r.max-r.min;
+  const pct=range>1?Math.min(100,Math.round((totalXP-r.min)/range*100)):100;
+  document.getElementById('rankName').textContent=r.name;
+  document.getElementById('rankIcon').className='rank-badge '+r.cls;
+  document.getElementById('rankIcon').innerHTML=r.short+'<span class="rank-badge-sub">Rango</span>';
+  document.getElementById('xpFill').style.width=pct+'%';
+  document.getElementById('xpText').textContent=totalXP+' / '+r.max+' XP para '+r.next;
+  document.getElementById('rankPts').textContent=totalXP;
+  document.querySelectorAll('.rank-step').forEach((el,i)=>{
+    el.classList.toggle('current',RANK_LEVELS[i].name===r.name);
+    el.classList.toggle('locked',totalXP<RANK_LEVELS[i].min);
+  });
+}
+
+// ── CHART ─────────────────────────────────────────────────────
+function switchChart(mode,btn){
+  chartMode=mode;
+  document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateChart();
+}
+
+function ultraChartOpts(xMax){
+  return{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:'#AAAAAA',font:{family:'Barlow Condensed',size:11}},grid:{color:'#F0F0F0'}},
+      y:{ticks:{color:'#AAAAAA',stepSize:1,font:{family:'Barlow Condensed',size:11}},grid:{color:'#F0F0F0'},min:0,max:xMax}
+    }
+  };
+}
+
+function updateChart(){
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  if(mainChartInst){mainChartInst.destroy();mainChartInst=null;}
+  if(chartMode==='bar'){
+    const weekDates=getWeekDatesOffset(currentWeekOffset);
+    const todayK=TODAY_KEY;
+    const data=weekDates.map(d=>habits.filter(h=>h.logs&&h.logs[dateKey(d)]).length);
+    const labels=weekDates.map(d=>DAY_NAMES[d.getDay()]+' '+d.getDate());
+    const colors=weekDates.map(d=>dateKey(d)===todayK?'rgba(78,195,224,0.7)':'rgba(200,200,200,0.4)');
+    const borders=weekDates.map(d=>dateKey(d)===todayK?'#4EC3E0':'#CCCCCC');
+    mainChartInst=new Chart(ctx,{
+      type:'bar',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderColor:borders,borderWidth:1}]},
+      options:ultraChartOpts(Math.max(habits.length,3))
+    });
+  } else if(chartMode==='line'){
+    // Last 4 weeks
+    const data=[-3,-2,-1,0].map(offset=>{
+      const wDates=getWeekDatesOffset(offset);
+      return habits.reduce((acc,h)=>acc+wDates.filter(d=>h.logs&&h.logs[dateKey(d)]).length,0);
+    });
+    mainChartInst=new Chart(ctx,{
+      type:'line',
+      data:{labels:['Sem -3','Sem -2','Sem -1','Esta'],datasets:[{data,borderColor:'#4EC3E0',backgroundColor:'rgba(78,195,224,0.06)',tension:.4,pointBackgroundColor:'#4EC3E0',pointRadius:4,fill:true}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#AAAAAA',font:{family:'Barlow Condensed',size:11}},grid:{color:'#F0F0F0'}},y:{ticks:{color:'#AAAAAA',stepSize:1,font:{family:'Barlow Condensed',size:11}},grid:{color:'#F0F0F0'},min:0}}}
+    });
+  } else {
+    const weekDates=getWeekDatesOffset(currentWeekOffset);
+    const data=habits.map(h=>{
+      const done=weekDates.filter(d=>h.logs&&h.logs[dateKey(d)]).length;
+      return Math.round(done/7*100);
+    });
+    const labels=habits.map(h=>h.name.length>14?h.name.slice(0,14)+'…':h.name);
+    mainChartInst=new Chart(ctx,{
+      type:'radar',
+      data:{labels,datasets:[{data,borderColor:'#4EC3E0',backgroundColor:'rgba(78,195,224,0.08)',pointBackgroundColor:'#4EC3E0'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{ticks:{color:'#AAAAAA',backdropColor:'transparent',stepSize:25,font:{family:'Barlow Condensed',size:10}},grid:{color:'#EEEEEE'},pointLabels:{color:'#888',font:{family:'Barlow Condensed',size:11}},min:0,max:100}}}
+    });
+  }
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────
+function renderCalendar(){
+  document.getElementById('calLabel').textContent=MONTH_NAMES[calMonth].toUpperCase()+' '+calYear;
+  const first=new Date(calYear,calMonth,1).getDay();
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const prev=new Date(calYear,calMonth,0).getDate();
+  const body=document.getElementById('calBody');
+  body.innerHTML='';
+  let cells=[];
+  for(let i=0;i<first;i++) cells.push({d:prev-first+i+1,o:true});
+  for(let i=1;i<=dim;i++) cells.push({d:i,o:false});
+  while(cells.length%7!==0) cells.push({d:cells.length-dim-first+1,o:true});
+  cells.forEach(({d,o})=>{
+    const el=document.createElement('div');
+    el.className='cal-d'+(o?' other':'');
+    const key=calYear+'-'+calMonth+'-'+d;
+    const isToday=!o&&d===now.getDate()&&calMonth===now.getMonth()&&calYear===now.getFullYear();
+    if(isToday) el.classList.add('today');
+    if(!o&&calEvents[key]&&calEvents[key].length) el.classList.add('has-event');
+    el.textContent=d;
+    if(!o) el.onclick=()=>selectDay(d);
+    body.appendChild(el);
+  });
+  renderCalChart();
+}
+
+function selectDay(day){
+  selectedCalDay=day;
+  const key=calYear+'-'+calMonth+'-'+day;
+  const evts=calEvents[key]||[];
+  const box=document.getElementById('calEvents');
+  const inp=document.getElementById('calInput');
+  if(evts.length){
+    box.innerHTML=evts.map(e=>`<div class="cal-evt"><div class="cal-evt-dot"></div><div><div class="cal-evt-text">${e}</div><div class="cal-evt-date">${day} de ${MONTH_NAMES[calMonth]}</div></div></div>`).join('');
+  } else {
+    box.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:2px;color:var(--silver-light);text-transform:uppercase">Sin eventos para el ${day} de ${MONTH_NAMES[calMonth]}</div>`;
+  }
+  inp.style.display='block';
+  inp.placeholder=`Agregar evento para el ${day}... (Enter)`;
+  inp.focus();
+}
+
+function addCalEvent(){
+  const inp=document.getElementById('calInput');
+  const val=inp.value.trim();
+  if(!val||!selectedCalDay) return;
+  const key=calYear+'-'+calMonth+'-'+selectedCalDay;
+  if(!calEvents[key]) calEvents[key]=[];
+  calEvents[key].push(val);
+  inp.value='';
+  selectDay(selectedCalDay);
+  renderCalendar();
+  totalXP+=5;updateRank();
+  saveAll();
+}
+
+function changeMonth(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  selectedCalDay=null;
+  document.getElementById('calInput').style.display='none';
+  document.getElementById('calEvents').innerHTML='<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:9px;letter-spacing:2px;color:var(--silver-light);text-transform:uppercase">Selecciona un dia para agregar evento</div>';
+  renderCalendar();
+  saveAll();
+}
+
+function renderCalChart(){
+  const ctx=document.getElementById('calChart').getContext('2d');
+  if(calChartInst){calChartInst.destroy();calChartInst=null;}
+  const data=['Sem 1','Sem 2','Sem 3','Sem 4'].map((_,wi)=>{
+    let c=0;
+    for(let d=wi*7+1;d<=Math.min(wi*7+7,31);d++){const k=calYear+'-'+calMonth+'-'+d;if(calEvents[k])c+=calEvents[k].length;}
+    return c;
+  });
+  calChartInst=new Chart(ctx,{
+    type:'bar',
+    data:{labels:['Sem 1','Sem 2','Sem 3','Sem 4'],datasets:[{data,backgroundColor:'rgba(78,195,224,0.25)',borderColor:'#4EC3E0',borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#AAAAAA',font:{family:'Barlow Condensed',size:10}},grid:{color:'#F0F0F0'}},y:{ticks:{color:'#AAAAAA',stepSize:1,font:{family:'Barlow Condensed',size:10}},grid:{color:'#F0F0F0'},min:0}}}
+  });
+}
+
+// ── BOOK ──────────────────────────────────────────────────────
+function updateBow(val){
+  bowProgress=parseInt(val);
+  document.getElementById('bowFill').style.width=val+'%';
+  document.getElementById('bowPct').textContent=val+'%';
+  totalXP=Math.max(0,totalXP+1);updateRank();
+  saveAll();
+}
+function toggleBookPicker(){
+  const p=document.getElementById('bookPicker');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+function setBook(){
+  bowBookIdx=parseInt(document.getElementById('bookSelect').value);
+  const bk=BOOK_TIPS[bowBookIdx]||BOOK_TIPS[0];
+  document.getElementById('bowTitle').textContent=bk.t;
+  document.getElementById('bowAuthor').textContent=bk.a;
+  document.getElementById('bowTip').textContent=bk.tip;
+  bowProgress=0;
+  document.getElementById('bowRange').value=0;
+  document.getElementById('bowFill').style.width='0%';
+  document.getElementById('bowPct').textContent='0%';
+  document.getElementById('bookPicker').style.display='none';
+  saveAll();
+}
+
+// ── DARK MODE ─────────────────────────────────────────────────
+function renderDark(){
+  // Quote
+  const q=QUOTES[quoteIdx];
+  document.getElementById('darkQuote').textContent='\u201c'+q.t+'\u201d';
+  document.getElementById('darkAuthor').textContent='— '+q.a;
+  // Tips
+  document.getElementById('darkTips').innerHTML=TIPS.map(t=>`<div class="dark-tip-item"><div class="dark-tip-n">${t.n}</div><div class="dark-tip-t">${t.t}</div></div>`).join('');
+  // Goals
+  renderGoals();
+  // Books
+  document.getElementById('darkBooksDev').innerHTML=BOOKS_DEV.map((b,i)=>`<div class="dark-book-item" onclick="toggleBook(this)"><div class="dark-book-n">0${i+1}</div><div class="dark-book-title">${b.t}</div><div class="dark-book-author">${b.a}</div><div class="dark-book-summary">${b.s}</div></div>`).join('');
+  document.getElementById('darkBooksVar').innerHTML=BOOKS_VAR.map((b,i)=>`<div class="dark-book-item" onclick="toggleBook(this)"><div class="dark-book-n">0${i+1}</div><div class="dark-book-title">${b.t}</div><div class="dark-book-author">${b.a}</div><div class="dark-book-summary">${b.s}</div></div>`).join('');
+  // Knowledge
+  showKnowledge();
+}
+
+function renderGoals(){
+  document.getElementById('darkGoals').innerHTML=goalsData.map((g,i)=>`<div class="dark-goal"><div class="dark-goal-check${goalsChecked[i]?' done':''}" id="gc${i}" onclick="toggleGoal(${i})">${goalsChecked[i]?'&#10003;':''}</div><div class="dark-goal-text${goalsChecked[i]?' done':''}" id="gt${i}">${g}</div></div>`).join('');
+}
+
+function toggleGoal(i){
+  goalsChecked[i]=!goalsChecked[i];
+  if(goalsChecked[i]){totalXP+=25;updateRank();}
+  renderGoals();
+  saveAll();
+}
+
+function addGoal(){
+  const inp=document.getElementById('newGoalInput');
+  const val=inp.value.trim();
+  if(!val) return;
+  goalsData.push(val);
+  inp.value='';
+  renderGoals();
+  saveAll();
+}
+
+function toggleBook(el){el.classList.toggle('open');}
+
+function nextQuote(){
+  quoteIdx=(quoteIdx+1)%QUOTES.length;
+  const el=document.getElementById('darkQuote');
+  el.style.opacity='0';
+  setTimeout(()=>{
+    el.textContent='\u201c'+QUOTES[quoteIdx].t+'\u201d';
+    document.getElementById('darkAuthor').textContent='— '+QUOTES[quoteIdx].a;
+    el.style.opacity='1';
+  },250);
+}
+
+function showKnowledge(){
+  document.getElementById('darkKnow').textContent=KNOWLEDGE[knowIdx].t;
+  document.getElementById('darkKnowSrc').textContent=KNOWLEDGE[knowIdx].s;
+}
+function nextKnowledge(){
+  knowIdx=(knowIdx+1)%KNOWLEDGE.length;
+  const el=document.getElementById('darkKnow');
+  el.style.opacity='0';
+  setTimeout(()=>{showKnowledge();el.style.opacity='1';},200);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(text){
+  const t=document.getElementById('toast');
+  document.getElementById('toastText').textContent=text;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4500);
+}
+
+// ── FOCUS TIMER ───────────────────────────────────────────────
+const FOCUS_TIPS=[
+  {n:"01",t:"Celular en modo avion o en otra habitacion. La sola presencia del telefono reduce el IQ en 10 puntos aunque no lo toques."},
+  {n:"02",t:"Define UNA sola tarea antes de iniciar el timer. La multitarea es el enemigo del trabajo profundo."},
+  {n:"03",t:"Despues de cada Pomodoro: 5 minutos de descanso real. Sin pantallas. Levantate, muevete."},
+  {n:"04",t:"Si aparece un pensamiento intruso, escribelo en papel y regresa al trabajo. No lo proceses en el momento."},
+  {n:"05",t:"Bloques de 90 minutos son el maximo de concentracion sostenida del cerebro humano. No fuerces mas."},
+  {n:"06",t:"La musica instrumental sin letra aumenta el rendimiento cognitivo. La musica con letra lo reduce."},
+];
+
+let timerTotal=25*60;
+let timerLeft=25*60;
+let timerRunning=false;
+let timerInterval=null;
+let focusSessions=0;
+let focusTotalMin=0;
+let focusXP=0;
+let activePreset=null;
+
+// Load focus state from localStorage
+(function(){
+  try{
+    const fd=JSON.parse(localStorage.getItem('apex_focus')||'{}');
+    if(fd.focusSessions) focusSessions=fd.focusSessions;
+    if(fd.focusTotalMin) focusTotalMin=fd.focusTotalMin;
+    if(fd.focusXP) focusXP=fd.focusXP;
+  }catch(e){}
+  updateFocusStats();
+})();
+
+function saveFocus(){
+  try{localStorage.setItem('apex_focus',JSON.stringify({focusSessions,focusTotalMin,focusXP}));}catch(e){}
+}
+
+function setPreset(min){
+  if(timerRunning) return;
+  timerTotal=min*60;
+  timerLeft=min*60;
+  document.getElementById('customMin').value=min;
+  document.querySelectorAll('.focus-preset').forEach(b=>b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  activePreset=min;
+  updateTimerDisplay();
+  updateRing();
+}
+
+function setCustomTime(){
+  if(timerRunning) return;
+  const min=Math.max(1,Math.min(180,parseInt(document.getElementById('customMin').value)||25));
+  timerTotal=min*60;
+  timerLeft=min*60;
+  document.querySelectorAll('.focus-preset').forEach(b=>b.classList.remove('active'));
+  activePreset=null;
+  updateTimerDisplay();
+  updateRing();
+}
+
+function toggleTimer(){
+  if(timerRunning){
+    // Pause
+    clearInterval(timerInterval);
+    timerRunning=false;
+    document.getElementById('focusPlayBtn').textContent='▶ CONTINUAR';
+    document.getElementById('focusPlayBtn').classList.remove('running');
+    document.getElementById('timerStatus').textContent='Pausado';
+    document.getElementById('timerStatus').style.color='#444';
+  } else {
+    // Start
+    timerRunning=true;
+    document.getElementById('focusPlayBtn').textContent='⏸ PAUSAR';
+    document.getElementById('focusPlayBtn').classList.add('running');
+    document.getElementById('timerStatus').textContent='Concentrando';
+    document.getElementById('timerStatus').style.color='#4EC3E0';
+    timerInterval=setInterval(tickTimer,1000);
+  }
+}
+
+function tickTimer(){
+  if(timerLeft<=0){
+    finishSession();
+    return;
+  }
+  timerLeft--;
+  updateTimerDisplay();
+  updateRing();
+}
+
+function updateTimerDisplay(){
+  const m=Math.floor(timerLeft/60).toString().padStart(2,'0');
+  const s=(timerLeft%60).toString().padStart(2,'0');
+  document.getElementById('timerDisplay').textContent=m+':'+s;
+  // Color warning at last 5 minutes
+  document.getElementById('timerDisplay').style.color=timerLeft<=300?'#7DD6EC':'#D0D0D0';
+}
+
+function updateRing(){
+  const circumference=2*Math.PI*108;
+  const pct=timerLeft/timerTotal;
+  const offset=circumference*(1-pct);
+  document.getElementById('timerRing').style.strokeDashoffset=offset;
+  document.getElementById('timerRing').setAttribute('stroke-dasharray',circumference);
+}
+
+function resetTimer(){
+  clearInterval(timerInterval);
+  timerRunning=false;
+  timerLeft=timerTotal;
+  document.getElementById('focusPlayBtn').textContent='▶ INICIAR';
+  document.getElementById('focusPlayBtn').classList.remove('running');
+  document.getElementById('timerStatus').textContent='En espera';
+  document.getElementById('timerStatus').style.color='#2A2A2A';
+  updateTimerDisplay();
+  updateRing();
+}
+
+function finishSession(){
+  clearInterval(timerInterval);
+  timerRunning=false;
+  timerLeft=0;
+  const minDone=Math.round(timerTotal/60);
+  focusSessions++;
+  focusTotalMin+=minDone;
+  const xpEarned=minDone*2;
+  focusXP+=xpEarned;
+  totalXP+=xpEarned;
+  updateRank();
+  updateFocusStats();
+  saveFocus();
+  saveAll();
+  document.getElementById('focusPlayBtn').textContent='▶ INICIAR';
+  document.getElementById('focusPlayBtn').classList.remove('running');
+  document.getElementById('timerStatus').textContent='Completado';
+  document.getElementById('timerStatus').style.color='#4EC3E0';
+  document.getElementById('timerDisplay').style.color='#4EC3E0';
+  showToast('Sesion completada. +'+xpEarned+' XP. Toma un descanso de 5 minutos.');
+  // play a subtle audio cue
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,150,300].forEach(delay=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=delay===0?440:delay===150?550:660;
+      osc.type='sine';
+      gain.gain.setValueAtTime(0,ctx.currentTime+delay/1000);
+      gain.gain.linearRampToValueAtTime(.15,ctx.currentTime+delay/1000+.05);
+      gain.gain.linearRampToValueAtTime(0,ctx.currentTime+delay/1000+.4);
+      osc.start(ctx.currentTime+delay/1000);
+      osc.stop(ctx.currentTime+delay/1000+.5);
+    });
+  }catch(e){}
+  timerLeft=timerTotal;
+  updateRing();
+}
+
+function updateFocusStats(){
+  document.getElementById('sessCount').textContent=focusSessions;
+  document.getElementById('totalFocusMin').textContent=focusTotalMin;
+  document.getElementById('focusXPEarned').textContent=focusXP;
+}
+
+// Focus tips
+document.getElementById('focusTipsList').innerHTML=FOCUS_TIPS.map(t=>
+  `<div class="dark-tip-item"><div class="dark-tip-n">${t.n}</div><div class="dark-tip-t">${t.t}</div></div>`
+).join('');
+
+// Initialize ring
+updateRing();
+loadAll();
+
+// Restore book UI
+(function(){
+  const bk=BOOK_TIPS[bowBookIdx]||BOOK_TIPS[0];
+  document.getElementById('bowTitle').textContent=bk.t;
+  document.getElementById('bowAuthor').textContent=bk.a;
+  document.getElementById('bowTip').textContent=bk.tip;
+  document.getElementById('bowRange').value=bowProgress;
+  document.getElementById('bowFill').style.width=bowProgress+'%';
+  document.getElementById('bowPct').textContent=bowProgress+'%';
+  document.getElementById('bookSelect').value=bowBookIdx;
+  // Restore active week tab (tabs map to offsets 0, -1, -2, -3)
+  const offsets=[0,-1,-2,-3];
+  document.querySelectorAll('.week-tab').forEach((b,i)=>{
+    b.classList.toggle('active', offsets[i]===currentWeekOffset);
+  });
+  const weekLabels=['Esta Sem','Sem Pas','2 Atras','3 Atras'];
+  document.getElementById('statWeek').textContent=weekLabels[offsets.indexOf(currentWeekOffset)]||'Esta Sem';
+})();
+
+renderDark();
+renderHabits();
+renderCalendar();
+updateRank();
+renderTasks();
+
+const isFirstVisit=!localStorage.getItem(SAVE_KEY+'_visited');
+localStorage.setItem(SAVE_KEY+'_visited','1');
+setTimeout(()=>showToast(isFirstVisit?'Bienvenido a APEX ULTRA. Todo tu progreso se guarda automaticamente.':'Progreso cargado. Sigue construyendo tu mejor version.'),1200);
+setInterval(()=>showToast(NOTIFS[Math.floor(Math.random()*NOTIFS.length)]),120000);
+</script>
+</body>
+</html>
